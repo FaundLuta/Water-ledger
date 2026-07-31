@@ -20,7 +20,7 @@ const RATE = 2700; // ₦ each room owes per month
 
 // In-memory copy of everyone's data: { A1: { tenant: "", paid: 0 }, ... }
 let roomsData = {};
-ROOM_IDS.forEach(id => { roomsData[id] = { tenant: "", paid: 0 }; });
+ROOM_IDS.forEach(id => { roomsData[id] = { tenant: "", paid: 0, active: true }; });
 
 let isAdmin = sessionStorage.getItem("isAdmin") === "true";
 let usingFirestore = false;
@@ -52,7 +52,9 @@ function initFirebase() {
           const data = doc.data();
           roomsData[id] = {
             tenant: data.tenant || "",
-            paid: Number(data.paid) || 0
+            paid: Number(data.paid) || 0,
+            // Older saved rooms won't have this field yet — treat them as active.
+            active: data.active === undefined ? true : Boolean(data.active)
           };
           updateCardDisplay(id);
         });
@@ -121,6 +123,14 @@ function buildRoomCards() {
           <span class="room-card__status" id="status-${id}"></span>
         </div>
 
+        <div class="room-toggle admin-only">
+          <label class="switch">
+            <input type="checkbox" id="active-${id}" checked />
+            <span class="switch__track"></span>
+          </label>
+          <span class="room-toggle__label" id="activeLabel-${id}">Room occupied</span>
+        </div>
+
         <div class="field">
           <label for="tenant-${id}">Tenant name</label>
           <input type="text" id="tenant-${id}" placeholder="Enter tenant name" />
@@ -156,6 +166,14 @@ function buildRoomCards() {
       saveRoom(id);
       updateDashboard();
     });
+
+    const activeToggle = card.querySelector(`#active-${id}`);
+    activeToggle.addEventListener("change", () => {
+      roomsData[id].active = activeToggle.checked;
+      updateCardDisplay(id);
+      saveRoom(id);
+      updateDashboard();
+    });
   });
 
   applyAdminLock(); // grey out inputs until an admin signs in
@@ -176,41 +194,71 @@ function updateCardDisplay(id, skipInputs = false) {
     paidInput.value = data.paid || "";
   }
 
+  const isActive = data.active !== false;
+  const activeToggle = document.getElementById(`active-${id}`);
+  if (activeToggle && document.activeElement !== activeToggle) {
+    activeToggle.checked = isActive;
+  }
+  const activeLabel = document.getElementById(`activeLabel-${id}`);
+  if (activeLabel) activeLabel.textContent = isActive ? "Room occupied" : "Room vacant";
+
+  const card = document.getElementById(`card-${id}`);
+  card.classList.toggle("room-card--vacant", !isActive);
+
   const paid = Number(data.paid) || 0;
   const balance = Math.max(RATE - paid, 0);
   const isPaid = paid >= RATE;
   const percent = Math.min((paid / RATE) * 100, 100);
 
-  document.getElementById(`balance-${id}`).textContent = isPaid ? "₦0" : formatNaira(balance);
-
   const statusEl = document.getElementById(`status-${id}`);
-  statusEl.textContent = isPaid ? "✅ PAID" : "PENDING";
-  statusEl.className = "room-card__status " + (isPaid ? "room-card__status--paid" : "room-card__status--pending");
+  const balanceEl = document.getElementById(`balance-${id}`);
+
+  if (!isActive) {
+    // Vacant rooms don't owe anything and aren't counted as pending/paid.
+    statusEl.textContent = "VACANT";
+    statusEl.className = "room-card__status room-card__status--vacant";
+    balanceEl.textContent = "—";
+  } else {
+    balanceEl.textContent = isPaid ? "₦0" : formatNaira(balance);
+    statusEl.textContent = isPaid ? "✅ PAID" : "PENDING";
+    statusEl.className = "room-card__status " + (isPaid ? "room-card__status--paid" : "room-card__status--pending");
+  }
 
   const gaugeFill = document.getElementById(`gaugeFill-${id}`);
-  gaugeFill.style.height = percent + "%";
-  gaugeFill.classList.toggle("is-full", isPaid);
+  gaugeFill.style.height = isActive ? percent + "%" : "0%";
+  gaugeFill.classList.toggle("is-full", isActive && isPaid);
+
+  // Tenant/paid inputs stay locked for vacant rooms even in admin mode —
+  // nothing to type in for an empty room until it's reactivated.
+  tenantInput.disabled = !isAdmin || !isActive;
+  paidInput.disabled = !isAdmin || !isActive;
 }
 
 // ---------- 7. DASHBOARD TOTALS ----------
 function updateDashboard() {
-  const totalExpected = ROOM_IDS.length * RATE;
+  let activeCount = 0;
   let totalCollected = 0;
   let paidCount = 0;
 
   ROOM_IDS.forEach(id => {
-    const paid = Number(roomsData[id].paid) || 0;
+    const room = roomsData[id];
+    if (room.active === false) return; // vacant rooms don't owe water dues
+
+    activeCount++;
+    const paid = Number(room.paid) || 0;
     // Count only up to the rate so an overpayment doesn't inflate "collected"
     totalCollected += Math.min(paid, RATE);
     if (paid >= RATE) paidCount++;
   });
 
+  const totalExpected = activeCount * RATE;
   const outstanding = totalExpected - totalCollected;
 
   document.getElementById("statExpected").textContent = formatNaira(totalExpected);
   document.getElementById("statCollected").textContent = formatNaira(totalCollected);
   document.getElementById("statOutstanding").textContent = formatNaira(outstanding);
-  document.getElementById("statPaidCount").textContent = `${paidCount} / ${ROOM_IDS.length}`;
+  document.getElementById("statPaidCount").textContent = `${paidCount} / ${activeCount}`;
+  document.getElementById("statActiveCount").textContent = `${activeCount} / ${ROOM_IDS.length}`;
 }
 
 // ---------- 8. SEARCH BAR ----------
@@ -230,10 +278,17 @@ function setupSearch() {
 // ---------- 9. ADMIN SIGN IN / LOCK ----------
 function applyAdminLock() {
   ROOM_IDS.forEach(id => {
+    const isActive = roomsData[id].active !== false;
     const tenantInput = document.getElementById(`tenant-${id}`);
     const paidInput = document.getElementById(`paid-${id}`);
-    if (tenantInput) tenantInput.disabled = !isAdmin;
-    if (paidInput) paidInput.disabled = !isAdmin;
+    const activeToggle = document.getElementById(`active-${id}`);
+    if (tenantInput) tenantInput.disabled = !isAdmin || !isActive;
+    if (paidInput) paidInput.disabled = !isAdmin || !isActive;
+    if (activeToggle) activeToggle.disabled = !isAdmin;
+
+    // Only admins get to see/use the vacancy toggle at all.
+    const toggleWrap = document.querySelector(`#active-${id}`)?.closest(".room-toggle");
+    if (toggleWrap) toggleWrap.classList.toggle("hidden", !isAdmin);
   });
 
   document.getElementById("adminBtn").classList.toggle("hidden", isAdmin);
@@ -293,7 +348,9 @@ function setupReset() {
 
   document.getElementById("resetConfirm").addEventListener("click", () => {
     ROOM_IDS.forEach(id => {
-      roomsData[id] = { tenant: "", paid: 0 };
+      // Keep whatever occupied/vacant status the room already had —
+      // a new month shouldn't silently "move someone back in."
+      roomsData[id] = { tenant: "", paid: 0, active: roomsData[id].active };
       updateCardDisplay(id);
       saveRoom(id);
     });
