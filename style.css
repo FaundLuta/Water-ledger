@@ -1,0 +1,345 @@
+/* =========================================================
+   style.css
+   ---------------------------------------------------------
+   DESIGN TOKENS
+   A "water meter" theme: each room card has a small vertical
+   gauge that fills up like a tank as payment rises toward
+   the ₦2,700 goal line. Colors lean teal/aqua (the subject
+   is literally water) rather than a generic dashboard blue.
+   ========================================================= */
+:root {
+  /* Palette */
+  --ink:          #10262A;   /* primary text */
+  --ink-soft:     #4B6469;   /* secondary text */
+  --paper:        #F1F5F3;   /* page background — cool, not cream */
+  --surface:      #FFFFFF;   /* card background */
+  --line:         #DCE6E3;   /* hairline borders */
+  --teal:         #0E6E63;   /* primary brand teal */
+  --teal-deep:    #0A4A43;   /* header background */
+  --aqua:         #22C3B6;   /* gauge fill / accent */
+  --amber:        #B9791C;   /* neutral "pending" tone for stat cards */
+  --success:      #1E8F5E;   /* paid green */
+  --success-bg:   #E5F5EC;
+  --danger:       #C1432E;   /* unpaid red */
+  --danger-bg:    #FBEAE6;
+
+  /* Type */
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(16,38,42,0.06), 0 8px 24px rgba(16,38,42,0.06);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.hidden { display: none !important; }
+
+/* ======================= TOP BAR ======================= */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--teal-deep);
+  color: #EAF6F3;
+  padding: 16px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.topbar__brand { display: flex; align-items: center; gap: 12px; }
+.topbar__drop { font-size: 28px; line-height: 1; }
+.topbar__title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+.topbar__subtitle {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: #B9DAD3;
+}
+
+.topbar__actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.sync-badge {
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #DFF5F0;
+}
+.sync-badge--live { background: rgba(34,195,182,0.18); border-color: rgba(34,195,182,0.5); }
+.sync-badge--connecting { background: rgba(255,255,255,0.08); }
+.sync-badge--offline { background: rgba(193,67,46,0.2); border-color: rgba(193,67,46,0.5); }
+
+/* Buttons */
+.btn {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.15s ease, opacity 0.15s ease;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn--outline { background: transparent; border-color: rgba(255,255,255,0.5); color: #EAF6F3; }
+.btn--outline:hover { background: rgba(255,255,255,0.1); }
+
+.btn--ghost { background: transparent; color: #EAF6F3; border-color: transparent; }
+.btn--ghost:hover { background: rgba(255,255,255,0.08); }
+
+.btn--danger { background: var(--danger); color: #fff; }
+.btn--danger:hover { opacity: 0.9; }
+
+.btn--primary { background: var(--teal); color: #fff; }
+.btn--primary:hover { opacity: 0.9; }
+
+/* ======================= PAGE / DASHBOARD ======================= */
+.page { max-width: 1180px; margin: 0 auto; padding: 24px; }
+
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+}
+.stat-card__label {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.stat-card__value {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.stat-card--collected .stat-card__value { color: var(--success); }
+.stat-card--outstanding .stat-card__value { color: var(--danger); }
+.stat-card--paid .stat-card__value { color: var(--teal); }
+
+/* ======================= TOOLBAR ======================= */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 10px 16px;
+  flex: 1 1 260px;
+  max-width: 420px;
+}
+.search__icon { font-size: 14px; opacity: 0.6; }
+.search input {
+  border: none;
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 14px;
+  width: 100%;
+  background: transparent;
+  color: var(--ink);
+}
+.mode-note {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+/* ======================= ROOM GRID ======================= */
+.rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.room-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+  transition: opacity 0.15s ease;
+}
+
+.room-card.is-filtered-out { display: none; }
+
+/* --- signature element: the little water gauge --- */
+.gauge {
+  position: relative;
+  width: 14px;
+  border-radius: 999px;
+  background: #E4EEEC;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+}
+.gauge__fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(180deg, var(--aqua), var(--teal));
+  transition: height 0.35s ease;
+}
+.gauge__fill.is-full { background: linear-gradient(180deg, #52D9A8, var(--success)); }
+.gauge__goal-tick {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 0; /* set inline to 0% since goal is always the top of the gauge */
+  border-top: 2px dashed rgba(16,38,42,0.35);
+}
+
+.room-card__body { flex: 1; min-width: 0; }
+
+.room-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+.room-card__room {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+}
+.room-card__status {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.room-card__status--paid { color: var(--success); background: var(--success-bg); }
+.room-card__status--pending { color: var(--danger); background: var(--danger-bg); }
+
+.field { margin-bottom: 10px; }
+.field label {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.field input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.field input:focus { outline: 2px solid var(--aqua); outline-offset: 1px; }
+.field input:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.field--amount input { font-family: var(--font-mono); }
+
+.room-card__balance {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+  color: var(--ink-soft);
+}
+.room-card__balance strong { font-family: var(--font-mono); color: var(--ink); }
+
+/* ======================= FOOTER ======================= */
+.page-footer {
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  padding: 20px;
+}
+
+/* ======================= MODALS ======================= */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,26,24,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+.modal__card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 24px;
+  max-width: 360px;
+  width: 100%;
+  box-shadow: var(--shadow);
+}
+.modal__card h2 {
+  font-family: var(--font-display);
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+.modal__hint { font-size: 13px; color: var(--ink-soft); margin: 0 0 14px; }
+.modal__card input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.modal__error { color: var(--danger); font-size: 12.5px; margin: -2px 0 10px; }
+.modal__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+
+/* ======================= RESPONSIVE ======================= */
+@media (max-width: 480px) {
+  .topbar { padding: 14px 16px; }
+  .page { padding: 16px; }
+  .rooms-grid { grid-template-columns: 1fr; }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .gauge__fill, .btn { transition: none; }
+}

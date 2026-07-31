@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Water Ledger — Lodge Payments</title>
+
+<!-- Google Fonts: a technical display face + a clean body face + a mono face for numbers (reads like a meter readout) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ======================= TOP BAR ======================= -->
+  <header class="topbar">
+    <div class="topbar__brand">
+      <span class="topbar__drop">💧</span>
+      <div>
+        <h1 class="topbar__title">Water Ledger</h1>
+        <p class="topbar__subtitle">12-room lodge · monthly water dues</p>
+      </div>
+    </div>
+
+    <div class="topbar__actions">
+      <span id="syncBadge" class="sync-badge sync-badge--connecting">Connecting…</span>
+      <button id="adminBtn" class="btn btn--outline">Admin Sign In</button>
+      <button id="resetBtn" class="btn btn--danger hidden">Reset New Month</button>
+      <button id="signOutBtn" class="btn btn--ghost hidden">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="page">
+
+    <!-- ======================= DASHBOARD ======================= -->
+    <section class="dashboard" aria-label="Collection summary">
+      <div class="stat-card">
+        <span class="stat-card__label">Total Expected</span>
+        <span class="stat-card__value" id="statExpected">₦0</span>
+      </div>
+      <div class="stat-card stat-card--collected">
+        <span class="stat-card__label">Total Collected</span>
+        <span class="stat-card__value" id="statCollected">₦0</span>
+      </div>
+      <div class="stat-card stat-card--outstanding">
+        <span class="stat-card__label">Outstanding Balance</span>
+        <span class="stat-card__value" id="statOutstanding">₦0</span>
+      </div>
+      <div class="stat-card stat-card--paid">
+        <span class="stat-card__label">Rooms Paid</span>
+        <span class="stat-card__value" id="statPaidCount">0 / 12</span>
+      </div>
+    </section>
+
+    <!-- ======================= SEARCH ======================= -->
+    <section class="toolbar">
+      <div class="search">
+        <span class="search__icon">🔍</span>
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Search by room number or tenant name…"
+          autocomplete="off"
+        />
+      </div>
+      <p id="adminModeNote" class="mode-note">Viewing in read-only mode. Sign in as admin to edit.</p>
+    </section>
+
+    <!-- ======================= ROOM GRID ======================= -->
+    <!-- Room cards are generated automatically by script.js -->
+    <section id="roomsGrid" class="rooms-grid" aria-label="Room payment cards"></section>
+
+  </main>
+
+  <footer class="page-footer">
+    <p>Data syncs live across every device signed into this project. Amounts are in Nigerian Naira (₦).</p>
+  </footer>
+
+  <!-- ======================= ADMIN PASSWORD MODAL ======================= -->
+  <div id="passwordModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal__card">
+      <h2 id="modalTitle">Admin Sign In</h2>
+      <p class="modal__hint">Enter the admin password to edit tenant names and payments.</p>
+      <input id="passwordInput" type="password" placeholder="Password" autocomplete="off" />
+      <p id="passwordError" class="modal__error hidden">Incorrect password. Try again.</p>
+      <div class="modal__actions">
+        <button id="passwordCancel" class="btn btn--ghost">Cancel</button>
+        <button id="passwordSubmit" class="btn btn--primary">Unlock Editing</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= RESET CONFIRM MODAL ======================= -->
+  <div id="resetModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+    <div class="modal__card">
+      <h2 id="resetTitle">Start a New Month?</h2>
+      <p class="modal__hint">This clears every tenant name and payment amount for all 12 rooms. This cannot be undone.</p>
+      <div class="modal__actions">
+        <button id="resetCancel" class="btn btn--ghost">Cancel</button>
+        <button id="resetConfirm" class="btn btn--danger">Yes, Reset Everything</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase (compat build — works with plain <script> tags, no bundler needed) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <!-- Config must load before script.js -->
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
